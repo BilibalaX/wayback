@@ -366,7 +366,7 @@ class WaybackSession(_utils.DisableAfterCloseSession, requests.Session):
     handleable_errors = (ConnectionError,) + retryable_errors
 
     def __init__(self, retries=6, backoff=2, timeout=60, user_agent=None,
-                 search_calls_per_second=1.5, memento_calls_per_second=30):
+                 search_calls_per_second=1.5, memento_calls_per_second=30, proxies=None):
         super().__init__()
         self.retries = retries
         self.backoff = backoff
@@ -378,6 +378,7 @@ class WaybackSession(_utils.DisableAfterCloseSession, requests.Session):
         }
         self.search_calls_per_second = search_calls_per_second
         self.memento_calls_per_second = memento_calls_per_second
+        self.proxies = proxies  
         # NOTE: the nice way to accomplish retry/backoff is with a urllib3:
         #     adapter = requests.adapters.HTTPAdapter(
         #         max_retries=Retry(total=5, backoff_factor=2,
@@ -438,6 +439,8 @@ class WaybackSession(_utils.DisableAfterCloseSession, requests.Session):
         """
         if 'timeout' not in kwargs:
             kwargs['timeout'] = self.timeout
+        if self.proxies and 'proxies' not in kwargs:
+            kwargs['proxies'] = self.proxies
         return super().request(method, url, **kwargs)
 
     def should_retry(self, response):
